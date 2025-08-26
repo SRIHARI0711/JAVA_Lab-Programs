@@ -1,0 +1,5 @@
+{
+    "java.debug.settings.onBuildFailureProceed": true,
+    "zencoder.enableRepoIndexing": true,
+    "git.ignoreLimitWarning": true
+}

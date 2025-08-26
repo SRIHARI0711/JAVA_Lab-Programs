@@ -1,0 +1,216 @@
+package Representative;
+
+import java.sql.*;
+import java.awt.GridLayout;
+import java.awt.event.*;
+import javax.swing.*;
+
+public class Representative extends JFrame implements ActionListener {
+    // Text fields for data entry and display
+    JTextField repno, repname, state, comm, rate, cust_no, cust_name, cred, repno1, repname1, state1, comm1, rate1;
+    JButton submit, display;
+    ResultSet rs;
+    Connection con;
+    PreparedStatement ps, ps1;
+    Statement st;
+    
+    Representative() {
+        super("Enter details");
+        
+        // Initialize all labels
+        JLabel r = new JLabel("Enter repno");
+        JLabel r1 = new JLabel("Enter repname");
+        JLabel r2 = new JLabel("Enter state");
+        JLabel r3 = new JLabel("Enter comm");
+        JLabel r4 = new JLabel("Enter rate");
+        JLabel r5 = new JLabel("Enter cust_no");
+        JLabel r6 = new JLabel("Enter cust_name");
+        JLabel r7 = new JLabel("Enter credit");
+        
+        // Initialize all text fields
+        repno = new JTextField(20);
+        repname = new JTextField(20);
+        state = new JTextField(20);
+        comm = new JTextField(20);
+        rate = new JTextField(20);
+        cust_no = new JTextField(20);
+        cust_name = new JTextField(20);
+        cred = new JTextField(20);
+        
+        // Initialize buttons
+        submit = new JButton("Submit");
+        display = new JButton("Display");
+        
+        // Add components to frame
+        add(r);
+        add(repno);
+        add(r1);
+        add(repname);
+        add(r2);
+        add(state);
+        add(r3);
+        add(comm);
+        add(r4);
+        add(rate);
+        add(r5);
+        add(cust_no);
+        add(r6);
+        add(cust_name);
+        add(r7);
+        add(cred);
+        add(submit);
+        add(display);
+        
+        // Add action listeners
+        submit.addActionListener(this);
+        display.addActionListener(this);
+        
+        // Load JDBC driver
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException e1) {
+            e1.printStackTrace();
+            JOptionPane.showMessageDialog(this, 
+                "MySQL JDBC Driver not found: " + e1.getMessage(), 
+                "Driver Error", 
+                JOptionPane.ERROR_MESSAGE);
+        }
+        
+        // Establish database connection
+        try {
+            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/Representative", "root", "Hari@2005");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, 
+                "Database connection failed: " + e.getMessage(), 
+                "Connection Error", 
+                JOptionPane.ERROR_MESSAGE);
+            // Disable buttons if connection fails
+            submit.setEnabled(false);
+            display.setEnabled(false);
+        }
+    }
+    
+    public void actionPerformed(ActionEvent evt) {
+        if (evt.getSource() == submit) {
+            // Get data from input fields
+            int repn = Integer.parseInt(repno.getText());
+            String repna = repname.getText();
+            String sta = state.getText();
+            String com = comm.getText();
+            String rat = rate.getText();
+            int custn = Integer.parseInt(cust_no.getText());
+            String custna = cust_name.getText();
+            String cre = cred.getText();
+            
+            // Insert data into Rep table
+            String query = "INSERT INTO Rep VALUES(?, ?, ?, ?, ?)";
+            try {
+                ps = con.prepareStatement(query);
+                ps.setInt(1, repn);
+                ps.setString(2, repna);
+                ps.setString(3, sta);
+                ps.setString(4, com);
+                ps.setString(5, rat);
+                
+                int i = ps.executeUpdate();
+                if (i > 0) {
+                    JOptionPane.showMessageDialog(this, 
+                        "Representative data saved successfully", 
+                        "Success", 
+                        JOptionPane.INFORMATION_MESSAGE);
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, 
+                    "Error saving representative data: " + e.getMessage(), 
+                    "SQL Error", 
+                    JOptionPane.ERROR_MESSAGE);
+            }
+            
+            // Insert data into Cust table
+            String query1 = "INSERT INTO Cust VALUES(?, ?, ?, ?, ?)";
+            try {
+                ps1 = con.prepareStatement(query1);
+                ps1.setInt(1, custn);
+                ps1.setString(2, custna);
+                ps1.setString(3, sta);
+                ps1.setString(4, cre);
+                ps1.setInt(5, repn);
+                
+                int i = ps1.executeUpdate();
+                if (i > 0) {
+                    JOptionPane.showMessageDialog(this, 
+                        "Customer data saved successfully", 
+                        "Success", 
+                        JOptionPane.INFORMATION_MESSAGE);
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, 
+                    "Error saving customer data: " + e.getMessage(), 
+                    "SQL Error", 
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        } else {
+            // Display button was clicked
+            try {
+                st = con.createStatement();
+                // Modified query: Get representatives where NONE of their customers have credit <= 15000
+                rs = st.executeQuery("SELECT * FROM Rep WHERE repno NOT IN (SELECT repno FROM Cust WHERE cred <= 15000)");
+                
+                if (rs != null) {
+                    while (rs.next()) {
+                        JFrame frm = new JFrame("Print");
+                        JLabel s5 = new JLabel("repno");
+                        JLabel s1 = new JLabel("repname");
+                        JLabel s2 = new JLabel("state");
+                        JLabel s3 = new JLabel("comm");
+                        JLabel s4 = new JLabel("rate");
+                        
+                        repno1 = new JTextField(20);
+                        repname1 = new JTextField(20);
+                        state1 = new JTextField(20);
+                        comm1 = new JTextField(20);
+                        rate1 = new JTextField(20);
+                        
+                        frm.add(s5);
+                        frm.add(repno1);
+                        frm.add(s1);
+                        frm.add(repname1);
+                        frm.add(s2);
+                        frm.add(state1);
+                        frm.add(s3);
+                        frm.add(comm1);
+                        frm.add(s4);
+                        frm.add(rate1);
+                        
+                        repno1.setText(String.valueOf(rs.getInt(1)));
+                        repname1.setText(rs.getString(2));
+                        state1.setText(rs.getString(3));
+                        comm1.setText(rs.getString(4));
+                        rate1.setText(rs.getString(5));
+                        
+                        frm.setVisible(true);
+                        frm.setSize(300, 300);
+                        frm.setLayout(new GridLayout(5, 2));
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, 
+                    "Error retrieving or displaying data: " + e.getMessage(), 
+                    "SQL Error", 
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+    
+    public static void main(String args[]) {
+        Representative obj = new Representative();
+        obj.setVisible(true);
+        obj.setSize(400, 500);
+        obj.setLayout(new GridLayout(15, 2));
+        obj.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    }
+}
